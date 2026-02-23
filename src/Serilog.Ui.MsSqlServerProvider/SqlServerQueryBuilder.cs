@@ -74,53 +74,6 @@ public class SqlServerQueryBuilder<TModel> : SqlQueryBuilder<TModel> where TMode
         queryBuilder.Append($"FROM [{schema}].[{tableName}] ");
     }
 
-    /// <summary>
-    /// Generates the WHERE clause for the SQL query.
-    /// </summary>
-    /// <param name="queryBuilder">The StringBuilder to append the WHERE clause to.</param>
-    /// <param name="columns">The column names used in the sink for logging.</param>
-    /// <param name="level">The log level to filter by.</param>
-    /// <param name="searchCriteria">The search criteria to filter by.</param>
-    /// <param name="startDate">The start date to filter by.</param>
-    /// <param name="endDate">The end date to filter by.</param>
-    private static void GenerateWhereClause(
-        StringBuilder queryBuilder,
-        SinkColumnNames columns,
-        string? level,
-        string? searchCriteria,
-        DateTime? startDate,
-        DateTime? endDate)
-    {
-        StringBuilder conditions2 = new();
+    protected override string EscapeColumn(string columnName) => $"[{columnName}]";
 
-        if (!string.IsNullOrWhiteSpace(level))
-        {
-            conditions2.Append($"AND [{columns.Level}] = @Level ");
-        }
-
-        if (!string.IsNullOrWhiteSpace(searchCriteria))
-        {
-            conditions2.Append($"AND ([{columns.Message}] LIKE @Search ");
-            conditions2.Append(AddExceptionToWhereClause() ? $"OR [{columns.Exception}] LIKE @Search) " : ") ");
-        }
-
-        if (startDate.HasValue)
-        {
-            conditions2.Append($"AND [{columns.Timestamp}] >= @StartDate ");
-        }
-
-        if (endDate.HasValue)
-        {
-            conditions2.Append($"AND [{columns.Timestamp}] <= @EndDate ");
-        }
-
-        if (conditions2.Length <= 0)
-        {
-            return;
-        }
-
-        queryBuilder
-            .Append("WHERE 1 = 1 ")
-            .Append(conditions2);
-    }
 }

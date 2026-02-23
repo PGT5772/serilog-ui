@@ -47,38 +47,4 @@ public class SqliteQueryBuilder : SqlQueryBuilder<LogModel>
         queryBuilder.Append($"FROM {tableName} ");
     }
 
-    /// <inheritdoc/>
-    private static void GenerateWhereClause(
-        StringBuilder queryBuilder,
-        SinkColumnNames columns,
-        string? level,
-        string? searchCriteria,
-        DateTime? startDate,
-        DateTime? endDate)
-    {
-        var conditionStart = "WHERE";
-
-        if (!string.IsNullOrWhiteSpace(level))
-        {
-            queryBuilder.Append($"{conditionStart} {columns.Level} = @Level ");
-            conditionStart = "AND";
-        }
-
-        if (!string.IsNullOrWhiteSpace(searchCriteria))
-        {
-            queryBuilder.Append($"{conditionStart} ({columns.Message} LIKE @Search OR {columns.Exception} LIKE @Search) ");
-            conditionStart = "AND";
-        }
-
-        if (startDate != null)
-        {
-            queryBuilder.Append($"{conditionStart} {columns.Timestamp} >= @StartDate ");
-            conditionStart = "AND";
-        }
-
-        if (endDate != null)
-        {
-            queryBuilder.Append($"{conditionStart} {columns.Timestamp} <= @EndDate ");
-        }
-    }
 }

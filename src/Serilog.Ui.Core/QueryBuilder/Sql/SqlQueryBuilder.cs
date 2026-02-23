@@ -64,4 +64,56 @@ public abstract class SqlQueryBuilder<TModel> where TModel : LogModel
 
         return att is null;
     }
+
+    /// <summary>
+    /// Escapes the column name according to the specific SQL dialect.
+    /// Can be overridden by specific providers (e.g., to add [] for SQL Server or "" for Postgres).
+    /// </summary>
+    /// <param name="columnName">The original column name.</param>
+    /// <returns>The escaped column name.</returns>
+    protected virtual string EscapeColumn(string columnName) => columnName;
+
+    /// <summary>
+    /// Generates the WHERE clause for the SQL query. 
+    /// This is common logic extracted to the base class to avoid duplication across providers.
+    /// </summary>
+    protected void GenerateWhereClause(
+        StringBuilder queryBuilder,
+        SinkColumnNames columns,
+        string? level,
+        string? searchCriteria,
+        DateTime? startDate,
+        DateTime? endDate)
+    {
+        StringBuilder conditions = new();
+
+        if (!string.IsNullOrWhiteSpace(level))
+        {
+            conditions.Append($"AND {EscapeColumn(columns.Level)} = @Level ");
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchCriteria))
+        {
+            conditions.Append($"AND ({EscapeColumn(columns.Message)} LIKE @Search ");
+            conditions.Append(AddExceptionToWhereClause() ? $"OR {EscapeColumn(columns.Exception)} LIKE @Search) " : ") ");
+        }
+
+        if (startDate.HasValue)
+        {
+            conditions.Append($"AND {EscapeColumn(columns.Timestamp)} >= @StartDate ");
+        }
+
+        if (endDate.HasValue)
+        {
+            conditions.Append($"AND {EscapeColumn(columns.Timestamp)} <= @EndDate ");
+        }
+
+        if (conditions.Length > 0)
+        {
+            // Usamos 1 = 1 porque es estándar en SQL y nos permite encadenar los 'AND' limpiamente
+            queryBuilder
+                .Append("WHERE 1 = 1 ")
+                .Append(conditions);
+        }
+    }
 }
